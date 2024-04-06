@@ -1,12 +1,13 @@
-from tkinter import messagebox, Tk
-import pygame
+import tkinter 
+import pygame, os
 import sys
-import time
 
 window_width = 500
 window_height = 500
 
 window = pygame.display.set_mode((window_width,window_height))
+os.environ['SDL_VIDEO_CENTERED'] = '1'
+
 
 columns = 25
 rows = 25
@@ -23,12 +24,13 @@ class Box:
         self.x = i
         self.y = j
 
-        # Setting flags
+        # flags
         self.start = False  # Set to true if box is the starting box
         self.wall = False  # Set to true if box is a wall
         self.target = False  # Set to true if the box is our target
         self.queued = False
         self.visited = False
+
         self.neighbours = []
         self.prior = None
 
@@ -42,7 +44,7 @@ class Box:
         if self.x < columns - 1:
             self.neighbours.append(grid[self.x + 1][self.y])
 
-        # Appending the boxes vertically adjacent to the current box
+        # Appending the boxes vertically adjacent 
         if self.y > 0:
             self.neighbours.append(grid[self.x][self.y - 1])
         if self.y < rows - 1:
@@ -57,6 +59,57 @@ for i in range(columns):
 for i in range(columns):
     for j in range(rows):
         grid[i][j].set_neighbours()
+
+def restart():
+    path.clear()
+    queue.clear()
+
+    for i in range(columns):
+        for j in range(rows):
+            box = grid[i][j]
+            box.start = False
+            box.target = False
+            box.wall = False
+            box.queued = False
+            box.visited = False
+            box = None
+
+    main(columns,rows)
+
+# prompts user to either quit or restart the program after search algorithm finishes 
+def restart_dialog():
+    root = tkinter.Tk()
+    root.withdraw()
+
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    dialog_width = 250
+    dialog_height = 100
+    x = (screen_width - dialog_width) // 2 # center line of the screen
+
+    dialog = tkinter.Toplevel(root)
+    dialog.title("Restart")
+    dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{0}")
+
+    label = tkinter.Label(dialog, text="Would you like to restart?")
+    label.pack(pady=10)
+
+    def on_ok():
+        dialog.destroy()  # Close the dialog
+        restart()  # Restart the program
+
+    def on_cancel():
+        dialog.destroy()
+        pygame.quit()
+        sys.exit()
+
+    ok_button = tkinter.Button(dialog, text="Restart", command=on_ok)
+    ok_button.pack(side=tkinter.LEFT, padx=10)
+
+    cancel_button = tkinter.Button(dialog, text="Quit", command=on_cancel)
+    cancel_button.pack(side=tkinter.RIGHT, padx=10)
+
+    root.mainloop()
 
 def main(columns, rows):
     begin_search = False
@@ -101,10 +154,8 @@ def main(columns, rows):
             if len(queue) > 0 and searching:  # Ensure queue is greater than zero
                 current_box = queue.pop(0)
                 current_box.visited = True
-                if current_box == target_box:  # If this condition is met, we've found our target box
+                if current_box == target_box: 
                     searching = False
-                    print("current_box: " + str(current_box))  # Useful for debugging
-                    print("current_box: " + str(current_box.prior))
                     while current_box.prior != start_box:
                         path.append(current_box.prior)
                         current_box = current_box.prior
@@ -115,9 +166,11 @@ def main(columns, rows):
                     for box in path:
                         box.draw(window, (0, 0, 200))
                         pygame.display.flip()  # Update display
-                        time.sleep(0.05)  # Delay for visualization     
+                        pygame.time.delay(70) # delay draw method by 70 ms. Better than using time.sleep, as it blocks the main thread     
                     searching = False    
                     begin_search = False
+
+                    restart_dialog()
                 else:
                     for neighbour in current_box.neighbours:  # If neighbour box is not a wall and not already queued
                         if not neighbour.queued and not neighbour.wall:
@@ -125,10 +178,10 @@ def main(columns, rows):
                             neighbour.prior = current_box
                             queue.append(neighbour)
             else:  # If queue is zero, no solution
-                if searching and (start_box.start):
-                    Tk().wm_withdraw()
-                    messagebox.showinfo("No solution", "There is no solution")
+                if searching and (start_box.start):                    
                     searching = False
+                    restart_dialog()
+                    
 
         window.fill((0, 0, 0))  # Fill before drawing our boxes
 
@@ -140,7 +193,7 @@ def main(columns, rows):
                 if box.queued:
                     box.draw(window, (200, 0, 0))
                 if box.visited:
-                    box.draw(window, (0, 200, 0))  # Green
+                    box.draw(window, (0, 200, 0))  
 
                 if box.start:
                     box.draw(window, (0, 200, 200))
