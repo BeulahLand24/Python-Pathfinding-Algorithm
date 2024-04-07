@@ -2,12 +2,13 @@ import tkinter
 import pygame, os
 import sys
 
+Clock = pygame.time.Clock()
+
 window_width = 500
 window_height = 500
 
 window = pygame.display.set_mode((window_width,window_height))
-os.environ['SDL_VIDEO_CENTERED'] = '1'
-
+os.environ['SDL_VIDEO_CENTERED'] = '1' # centers the window 
 
 columns = 25
 rows = 25
@@ -128,9 +129,14 @@ def main(columns, rows):
                 x = pygame.mouse.get_pos()[0]
                 y = pygame.mouse.get_pos()[1]
                 if event.buttons[0]:  # Whenever the left mouse button is pressed
-                    i = x // box_width
-                    j = y // box_height
-                    grid[i][j].wall = True
+                    try:
+                        i = x // box_width
+                        j = y // box_height
+                        grid[i][j].wall = True
+                    except:
+                        continue
+                        # do nothing. We are trying to draw walls outside of the gridspace
+
                 if event.buttons[2] and not target_box_set:  # If the right mouse button is pressed
                     i = x // box_width
                     j = y // box_height
@@ -145,7 +151,23 @@ def main(columns, rows):
                         start_box.start = True
                         start_box.visited = True
                         queue.append(start_box)
+                if pygame.key.get_pressed()[pygame.K_d]:
+                    i = x // box_width
+                    j = y // box_height
+                    
+                    if grid[i][j].wall:
+                        grid[i][j].wall = False
 
+                    if grid[i][j].start:
+                        grid[i][j].start = False
+                        start_box.start = False
+                        start_box.visited = False
+                        queue.pop() # remove the starting box from the queue
+                    
+                    if grid[i][j].target:
+                        grid[i][j].target = False
+                        target_box_set = False
+                        
             # Start algorithm
             if pygame.key.get_pressed()[pygame.K_SPACE] and target_box_set: # make sure that we are pressing space and the target_box is set before we begin searching
                 begin_search = True
@@ -163,11 +185,13 @@ def main(columns, rows):
                     path.reverse()
 
                     # Visualize the path
+                    
                     for box in path:
                         box.draw(window, (0, 0, 200))
                         pygame.display.flip()  # Update display
-                        pygame.time.delay(70) # delay draw method by 70 ms. Better than using time.sleep, as it blocks the main thread     
-                    searching = False    
+                        Clock.tick(60)
+
+                        
                     begin_search = False
 
                     restart_dialog()
@@ -182,7 +206,6 @@ def main(columns, rows):
                     searching = False
                     restart_dialog()
                     
-
         window.fill((0, 0, 0))  # Fill before drawing our boxes
 
         for i in range(columns):  # Draw every box
