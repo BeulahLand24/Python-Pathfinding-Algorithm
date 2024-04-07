@@ -18,6 +18,7 @@ Alternativly, you can download the file directly.
 - Place the starting location by pressing 'S' on your keyboard.
 - Set the target location by left-clicking on the grid.
 - Draw walls with right-click and drag to block the path.
+- Delete targets, walls, and starting boxes by pressing 'D'
 - Press the spacebar to start Dijkstra's search algorithm
 
 *Note:* Drawing walls may require holding down the mouse button/key and moving the cursor over the grid box you intend to draw on. Future commits will focus on streamlining this feature.
